@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Roles{% endblock %}
+{% block content %}
+<h1>Roles y permisos</h1>
+<form method="post" action="{{ url_for('admin.rol_guardar') }}" class="panel" data-crud="rol">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="id">
+  <h2 class="crud-titulo">Nuevo rol</h2>
+  <div class="fila-campos">
+    <div class="campo"><label for="r-nombre">Nombre</label><input id="r-nombre" name="nombre" required maxlength="30"></div>
+    <div class="campo ancho"><label for="r-desc">Descripción</label><input id="r-desc" name="descripcion"></div>
+  </div>
+  <fieldset class="permisos"><legend>Puede acceder a</legend>
+    {% for k, n in modulos.items() %}<label class="check"><input type="checkbox" name="permisos" value="{{ k }}"> {{ n }}</label>{% endfor %}
+  </fieldset>
+  <p class="nota solo-edicion">El rol ADMIN siempre conserva todos los permisos.</p>
+  <div class="acciones">
+    <button class="btn crud-enviar">Crear rol</button>
+    <button type="button" class="btn sec crud-cancelar" hidden>Cancelar edición</button>
+  </div>
+</form>
+<section class="panel">
+  <h2>Roles ({{ roles|length }})</h2>
+  <table>
+    <thead><tr><th>Rol</th><th>Puede acceder a</th><th class="num">Usuarios</th><th></th></tr></thead>
+    <tbody>{% for r in roles %}
+      <tr data-json='{{ {"id": r.id, "nombre": r.nombre, "descripcion": r.descripcion, "permisos": r.lista}|tojson }}'>
+        <td><strong>{{ r.nombre }}</strong><br><small class="muted">{{ r.descripcion }}</small></td>
+        <td>{% for p in r.lista %}<span class="chip">{{ modulos[p] }}</span> {% endfor %}</td>
+        <td class="num">{{ r.usuarios }}</td>
+        <td class="acc">
+          <button type="button" class="btn sec chico js-editar">Editar</button>
+          {% if r.nombre != 'ADMIN' %}
+          <form method="post" action="{{ url_for('admin.rol_eliminar', rid=r.id) }}" class="en-linea js-confirm" data-confirm="¿Eliminar el rol &quot;{{ r.nombre }}&quot;?">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="btn peligro chico">Eliminar</button>
+          </form>{% endif %}
+        </td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

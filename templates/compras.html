@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Compras{% endblock %}
+{% block content %}
+<div class="titulo-fila"><h1>Historial de compras</h1><a class="btn" href="{{ url_for('compras.nueva') }}">Nueva compra</a></div>
+<form method="get" class="panel barra">
+  <div class="campo"><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="acciones"><button class="btn">Consultar</button></div>
+</form>
+<section class="panel">
+  <h2>{{ filas|length }} {{ 'compra' if filas|length == 1 else 'compras' }} · {{ total|soles }}</h2>
+  {% if filas %}
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>N°</th><th>Fecha</th><th>Proveedor</th><th class="num">Ítems</th><th class="num">Total</th><th>Registró</th></tr></thead>
+    <tbody>{% for c in filas %}
+      <tr><td><a href="{{ url_for('compras.detalle', cid=c.id) }}">#{{ c.id }}</a></td><td>{{ c.fecha|fh }}</td><td>{{ c.proveedor }}</td>
+      <td class="num">{{ c.items }}</td><td class="num">{{ c.total|soles }}</td><td>{{ c.usuario }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="vacio">No hay compras en este período.</p>{% endif %}
+</section>
+{% endblock %}

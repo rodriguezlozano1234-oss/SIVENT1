@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Panel de administración{% endblock %}
+{% block content %}
+<h1>Panel de administración</h1>
+
+<div class="resumen">
+  <div class="dato grande">
+    <span class="cifra">{{ d.hoy.t|soles }}</span>
+    <span class="rotulo">vendido hoy en {{ d.hoy.n }} {{ 'venta' if d.hoy.n == 1 else 'ventas' }}</span>
+  </div>
+  <div class="dato">
+    <span class="cifra">{{ d.mes.t|soles }}</span>
+    <span class="rotulo">en lo que va del mes ({{ d.mes.n }} {{ 'venta' if d.mes.n == 1 else 'ventas' }})</span>
+  </div>
+  <div class="dato">
+    <span class="cifra {{ 'alerta' if d.bajos }}">{{ d.bajos|length }}</span>
+    <span class="rotulo">{{ 'producto con stock bajo' if d.bajos|length == 1 else 'productos con stock bajo' }}</span>
+  </div>
+</div>
+
+<div class="resumen cuatro">
+  <div class="dato"><span class="cifra">{{ d.inv.productos }}</span><span class="rotulo">productos activos · {{ '{:,}'.format(d.inv.unidades) }} unidades</span></div>
+  <div class="dato"><span class="cifra">{{ d.inv.costo|soles }}</span><span class="rotulo">inventario a precio de compra</span></div>
+  <div class="dato"><span class="cifra">{{ d.inv.venta|soles }}</span><span class="rotulo">inventario a precio de venta</span></div>
+  <div class="dato"><span class="cifra {{ 'alerta' if d.inv.agotados }}">{{ d.inv.agotados }}</span><span class="rotulo">{{ 'producto agotado' if d.inv.agotados == 1 else 'productos agotados' }}</span></div>
+</div>
+{% if d.inv.sin_foto %}
+<p class="aviso aviso-info">{{ d.inv.sin_foto }} {{ 'producto no tiene' if d.inv.sin_foto == 1 else 'productos no tienen' }} foto en el catálogo. <a href="{{ url_for('catalogo.productos') }}">Agregar fotos</a></p>
+{% endif %}
+
+<section class="panel">
+  <h2>Ventas de los últimos 7 días</h2>
+  <div class="semana" role="img" aria-label="Ventas por día de los últimos 7 días">
+    {% for s in d.semana %}
+    <div class="col-sem">
+      <span class="monto">{{ '%.0f'|format(s.total) if s.total else '' }}</span>
+      <span class="barra-v" style="height: {{ s.pct }}%"></span>
+      <span class="dia">{{ s.dia }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="dos">
+  <section class="panel">
+    <h2>Vendedores del mes</h2>
+    {% if d.empleados %}
+    <table>
+      <thead><tr><th>Empleado</th><th class="num">Ventas</th><th class="num">Total</th></tr></thead>
+      <tbody>{% for e in d.empleados %}<tr><td>{{ e.nombre }}</td><td class="num">{{ e.n }}</td><td class="num">{{ e.total|soles }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <p class="nota"><a href="{{ url_for('reportes.ver', clave='empleados') }}">Ver reporte completo</a></p>
+    {% else %}<p class="vacio">Aún no hay ventas este mes.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Stock bajo</h2>
+    {% if d.bajos %}
+    <table>
+      <thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th></tr></thead>
+      <tbody>{% for p in d.bajos %}<tr><td class="prod-celda">{{ foto(p.imagen, p.nombre) }}<span>{{ p.nombre }}<br><small class="muted">{{ p.codigo }}</small></span></td><td class="num">{{ p.cantidad }}</td><td class="num">{{ p.stock_min }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<p class="vacio">Todos los productos están por encima de su stock mínimo.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Productos más vendidos del mes</h2>
+    {% if d.top %}
+    <table>
+      <thead><tr><th>Producto</th><th class="num">Unid.</th><th class="num">Total</th></tr></thead>
+      <tbody>{% for t in d.top %}<tr><td class="prod-celda">{{ foto(t.imagen, t.nombre) }}<span>{{ t.nombre }}</span></td><td class="num">{{ t.unidades }}</td><td class="num">{{ t.total|soles }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <p class="nota"><a href="{{ url_for('reportes.ver', clave='productos') }}">Ver reporte completo</a></p>
+    {% else %}<p class="vacio">Aún no hay ventas este mes.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Últimas ventas</h2>
+    {% if d.ultimas %}
+    <table>
+      <thead><tr><th>Comprobante</th><th>Atendió</th><th class="num">Total</th></tr></thead>
+      <tbody>{% for v in d.ultimas %}
+        <tr class="{{ 'anulada' if v.estado == 'ANULADA' }}"><td><a href="{{ url_for('ventas.detalle', vid=v.id) }}">{{ serie(v) }}</a>{% if v.estado == 'ANULADA' %} <span class="tag bajo">anulada</span>{% endif %}<br><small class="muted">{{ v.fecha|fh }}</small></td>
+        <td>{{ v.usuario }}</td><td class="num">{{ v.total|soles }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="vacio">Aún no hay ventas.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Últimas compras</h2>
+    {% if d.compras %}
+    <table>
+      <thead><tr><th>Compra</th><th>Proveedor</th><th class="num">Total</th></tr></thead>
+      <tbody>{% for c in d.compras %}
+        <tr><td><a href="{{ url_for('compras.detalle', cid=c.id) }}">#{{ c.id }}</a><br><small class="muted">{{ c.fecha|fh }}</small></td><td>{{ c.proveedor }}</td><td class="num">{{ c.total|soles }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="vacio">Aún no hay compras.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

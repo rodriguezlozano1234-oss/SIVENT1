@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Ingresar{% endblock %}
+{% block bare %}
+<div class="login">
+  <section class="login-marca">
+    <h1>SIVENT</h1>
+    <p>Controle inventario, compras y ventas de su negocio desde cualquier navegador.</p>
+  </section>
+  <section class="login-form">
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <h2>Ingresar al sistema</h2>
+
+      <fieldset class="accesos">
+        <legend class="sr">Tipo de acceso</legend>
+        <input type="radio" name="acceso" value="admin" id="acc-admin" {{ 'checked' if acceso == 'admin' }}>
+        <label for="acc-admin"><strong>Administrador</strong><span>Gestión completa y reportes</span></label>
+        <input type="radio" name="acceso" value="vendedor" id="acc-vendedor" {{ 'checked' if acceso == 'vendedor' }}>
+        <label for="acc-vendedor"><strong>Vendedor</strong><span>Ventas y atención al cliente</span></label>
+      </fieldset>
+
+      {% include '_flash.html' %}
+      <label for="usuario">Usuario</label>
+      <input id="usuario" name="usuario" autocomplete="username" autofocus required>
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn ok grande">Ingresar</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

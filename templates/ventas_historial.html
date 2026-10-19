@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Historial de ventas{% endblock %}
+{% block content %}
+<h1>Historial de ventas</h1>
+<form method="get" class="panel barra">
+  <div class="campo"><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="acciones"><button class="btn">Consultar</button></div>
+</form>
+<section class="panel">
+  <h2>{{ filas|length }} {{ 'venta' if filas|length == 1 else 'ventas' }} · {{ total|soles }}{% if not todas %} <small class="muted">(solo las suyas)</small>{% endif %}</h2>
+  {% if anuladas %}<p class="nota">{{ anuladas }} {{ 'venta anulada no suma' if anuladas == 1 else 'ventas anuladas no suman' }} en el total.</p>{% endif %}
+  {% if filas %}
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>Comprobante</th><th>Fecha</th><th>Cliente</th><th>Atendió</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>{% for v in filas %}
+      <tr class="{{ 'anulada' if v.estado == 'ANULADA' }}"><td><a href="{{ url_for('ventas.detalle', vid=v.id) }}">{{ serie(v) }}</a>{% if v.estado == 'ANULADA' %} <span class="tag bajo">anulada</span>{% endif %}</td><td>{{ v.fecha|fh }}</td>
+      <td>{{ v.cliente_nombre or 'Público general' }}</td><td>{{ v.usuario_nombre }}</td><td class="num">{{ v.total|soles }}</td>
+      <td class="acc"><a class="btn sec chico" href="{{ url_for('ventas.comprobante', vid=v.id) }}" target="_blank" rel="noopener">PDF</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="vacio">No hay ventas en este período.</p>{% endif %}
+</section>
+{% endblock %}

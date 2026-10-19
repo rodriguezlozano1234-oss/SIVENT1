@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Nueva compra{% endblock %}
+{% block content %}
+<h1>Nueva compra</h1>
+<div id="resultado" class="aviso ok" hidden></div>
+<div id="error" class="aviso error" hidden></div>
+
+<div class="ventas-grid">
+  <section class="panel">
+    <div class="cabecera-tabla">
+      <h2>Productos</h2>
+      <input type="search" id="buscar" placeholder="Buscar por código o nombre" aria-label="Buscar producto" autofocus>
+    </div>
+    <div class="tabla-scroll alta"><table>
+      <thead><tr><th>Producto</th><th class="num">Último costo</th><th class="num">Stock</th><th></th></tr></thead>
+      <tbody id="lista-productos"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <h2>Detalle de la compra</h2>
+    <label for="proveedor">Proveedor</label>
+    <input id="proveedor" maxlength="120" placeholder="Nombre o razón social del proveedor">
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Producto</th><th class="num">Cant.</th><th class="num">Costo unit.</th><th class="num">Subtotal</th><th></th></tr></thead>
+      <tbody id="carrito"></tbody>
+    </table></div>
+    <p class="vacio" id="carrito-vacio">Agregue los productos que recibió del proveedor.</p>
+    <div class="total"><span>Total</span><strong id="total">S/ 0.00</strong></div>
+    <p class="nota">Al confirmar, las cantidades entran al inventario y el costo queda como último precio de compra.</p>
+    <button class="btn ok grande" id="confirmar" disabled>Registrar compra</button>
+  </section>
+</div>
+<script id="productos-data" type="application/json">{{ productos|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/compras.js') }}"></script>{% endblock %}

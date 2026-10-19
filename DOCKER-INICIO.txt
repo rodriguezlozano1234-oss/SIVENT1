@@ -1,0 +1,51 @@
+SIVENT + DOCKER (WINDOWS)
+=========================
+
+REQUISITOS
+- Docker Desktop abierto y funcionando (debe indicar "Engine running").
+
+INICIAR (la forma facil)
+1. Descomprime el ZIP en una carpeta sencilla, por ejemplo C:\SIVENT.
+2. Haz doble clic en iniciar.bat. Crea el archivo .env con la clave secreta si falta,
+   construye la imagen, arranca SIVENT y abre http://localhost:5000/login.
+   (La primera vez tarda unos minutos porque descarga Python y las librerias.)
+
+INICIAR (manual)
+   docker compose up -d --build
+   Si aparece "SIVENT_SECRET_KEY is missing", falta el archivo .env: usa iniciar.bat.
+
+COMPROBAR
+   docker compose ps
+   docker compose logs -f sivent
+
+DETENER SIN BORRAR LOS DATOS
+   docker compose down
+
+VOLVER A INICIAR
+   docker compose up -d
+
+ACTUALIZAR A UNA VERSION NUEVA
+- Reemplaza los archivos del proyecto (conserva la carpeta data y el archivo .env) y ejecuta de nuevo iniciar.bat
+  (o docker compose up -d --build).
+
+DATOS
+- La base de datos esta en data/sivent.db y las fotos de productos en data/uploads/productos.
+  Ambas se conservan al detener o recrear el contenedor. Respalda la carpeta data completa.
+- No borres la carpeta data si quieres conservar la informacion.
+- La aplicacion usa SQLite; no hace falta instalar MySQL.
+- Cambia las contrasenas de ejemplo al entrar. Credenciales iniciales:
+  Administrador: admin / 1234
+  Vendedor: vendedor / vendedor123
+- El archivo .env contiene la clave de sesion. No lo publiques ni lo compartas.
+  Si lo cambias o lo borras, solo se cierran las sesiones abiertas; los datos no se afectan.
+
+USAR DESDE CELULARES (u otras PC de la red)
+- Abre el puerto en el firewall (PowerShell como administrador):
+  New-NetFirewallRule -DisplayName "SIVENT 5000" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow
+- Entra a http://IP-DE-LA-PC:5000/login (iniciar.bat muestra la IP al terminar).
+
+SOLUCION DE PROBLEMAS
+- "SIVENT_SECRET_KEY is missing": falta .env. Ejecuta iniciar.bat.
+- "Docker Desktop is unable to start" / "cannot connect to the Docker daemon": abre Docker Desktop y espera.
+- Puerto 5000 ocupado: en compose.yaml cambia "5000:5000" por "5001:5000" y entra a http://localhost:5001/login.
+- Si no inicia, revisa: docker compose logs sivent

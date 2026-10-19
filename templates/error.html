@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Error {{ codigo }}{% endblock %}
+{% block content %}
+<h1>{{ 'Sin acceso' if codigo == 403 else 'No se pudo completar' }}</h1>
+<p>{{ mensaje }}</p>
+<p><a class="btn" href="{{ url_for('inicio') }}">Volver al inicio</a></p>
+{% endblock %}
+{% block bare %}
+<div class="login-form" style="min-height:100vh"><div><h1>{{ codigo }}</h1><p>{{ mensaje }}</p><a class="btn" href="{{ url_for('login') }}">Ir a ingresar</a></div></div>
+{% endblock %}

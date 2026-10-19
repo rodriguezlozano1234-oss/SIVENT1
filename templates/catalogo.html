@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Catálogo{% endblock %}
+{% block content %}
+<div class="titulo-fila">
+  <h1>Catálogo</h1>
+  <div class="acciones empuja" style="margin:0">
+    {% if puede('catalogo') %}<a class="btn sec" href="{{ url_for('catalogo.productos') }}">Gestionar productos</a>{% endif %}
+    <a class="btn" id="cat-pdf" href="{{ url_for('catalogo.vitrina_pdf') }}" target="_blank" rel="noopener">Descargar catálogo (PDF)</a>
+  </div>
+</div>
+
+{% if puede('catalogo') and sin_foto %}
+<p class="aviso aviso-info">{{ sin_foto }} {{ 'producto no tiene' if sin_foto == 1 else 'productos no tienen' }} foto. Súbala desde <a href="{{ url_for('catalogo.productos') }}">Productos → Editar</a>.</p>
+{% endif %}
+
+<section class="panel barra-cat">
+  <div class="campo busca"><label for="c-buscar">Buscar</label><input type="search" id="c-buscar" placeholder="Nombre, código o descripción" autocomplete="off"></div>
+  <div class="campo"><label for="c-orden">Ordenar por</label>
+    <select id="c-orden">
+      <option value="nombre">Nombre (A–Z)</option>
+      <option value="precio-asc">Precio: menor a mayor</option>
+      <option value="precio-desc">Precio: mayor a menor</option>
+      <option value="reciente">Más recientes</option>
+    </select></div>
+  <label class="check disp"><input type="checkbox" id="c-disp"> Solo con stock</label>
+</section>
+
+<div class="chips" role="group" aria-label="Filtrar por categoría">
+  <button type="button" class="chip-btn on" data-cat="">Todas <span>{{ productos|length }}</span></button>
+  {% for c in categorias %}<button type="button" class="chip-btn" data-cat="{{ c.id }}">{{ c.nombre }} <span>{{ c.n }}</span></button>{% endfor %}
+</div>
+
+<p class="nota" id="c-cuenta" aria-live="polite"></p>
+
+{% if productos %}
+<div class="rejilla" id="rejilla">
+  {% for p in productos %}
+  <article class="tarjeta" tabindex="0" role="button" aria-label="Ver detalle de {{ p.nombre }}"
+           data-id="{{ p.id }}" data-cat="{{ p.categoria_id }}" data-nombre="{{ p.nombre|lower }}" data-precio="{{ p.precio_venta }}"
+           data-stock="{{ p.stock }}" data-texto="{{ (p.nombre ~ ' ' ~ p.codigo ~ ' ' ~ p.descripcion ~ ' ' ~ p.categoria)|lower }}"
+           data-json='{{ {"id": p.id, "codigo": p.codigo, "nombre": p.nombre, "descripcion": p.descripcion, "categoria": p.categoria,
+                          "precio": p.precio_venta, "costo": p.precio_compra if ver_costo else None, "stock": p.stock, "minimo": p.stock_min,
+                          "ubicacion": p.ubicacion, "img": foto_url(p.imagen), "tono": tono(p.nombre), "iniciales": iniciales(p.nombre)}|tojson }}'>
+    <div class="tarjeta-foto">
+      {{ foto(p.imagen, p.nombre, miniatura=True, clase="grande") }}
+      {% if p.stock == 0 %}<span class="insignia agotado">Agotado</span>
+      {% elif p.stock <= p.stock_min %}<span class="insignia pocas">Quedan {{ p.stock }}</span>{% endif %}
+    </div>
+    <div class="tarjeta-cuerpo">
+      <small class="muted">{{ p.categoria }} · {{ p.codigo }}</small>
+      <h3>{{ p.nombre }}</h3>
+      <p class="tarjeta-precio">{{ p.precio_venta|soles }}</p>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+<p class="vacio" id="c-vacio" hidden>Ningún producto coincide con la búsqueda.</p>
+{% else %}
+<p class="vacio">Todavía no hay productos en el catálogo.</p>
+{% endif %}
+
+<dialog id="detalle" class="modal" aria-labelledby="d-nombre">
+  <div class="modal-grid">
+    <div class="modal-foto" id="d-foto"></div>
+    <div class="modal-info">
+      <small class="muted" id="d-meta"></small>
+      <h2 id="d-nombre"></h2>
+      <p class="tarjeta-precio grande" id="d-precio"></p>
+      <p id="d-desc" class="muted"></p>
+      <dl class="datos">
+        <div><dt>Disponibilidad</dt><dd id="d-stock"></dd></div>
+        <div id="d-ubic-fila"><dt>Ubicación</dt><dd id="d-ubic"></dd></div>
+        <div id="d-costo-fila" hidden><dt>Costo / margen</dt><dd id="d-costo"></dd></div>
+      </dl>
+      <div class="acciones">
+        {% if puede('ventas') %}<a class="btn ok" id="d-vender" href="#">Vender este producto</a>{% endif %}
+        {% if puede('catalogo') %}<a class="btn sec" id="d-editar" href="#">Editar</a>{% endif %}
+        <button type="button" class="btn sec" id="d-cerrar">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+<script>window.SIVENT_CAT = {ventas: "{{ url_for('ventas.nueva') }}", editar: "{{ url_for('catalogo.productos') }}", pdf: "{{ url_for('catalogo.vitrina_pdf') }}", fotos: "{{ url_for('catalogo.media', archivo='x') }}".replace(/x$/, '')};</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/catalogo.js') }}"></script>{% endblock %}

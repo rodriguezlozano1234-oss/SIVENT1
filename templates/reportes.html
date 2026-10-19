@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ r.titulo }}{% endblock %}
+{% block content %}
+<h1>{{ r.titulo }}</h1>
+<form method="get" class="panel barra">
+  <div class="campo"><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ r.desde }}"></div>
+  <div class="campo"><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ r.hasta }}"></div>
+  {% if r.agrupar %}
+  <div class="campo"><label for="agrupar">Agrupar</label>
+    <select id="agrupar" name="agrupar">{% for k, n in [('diario','Por día'),('semanal','Por semana'),('mensual','Por mes')] %}<option value="{{ k }}" {{ 'selected' if r.agrupar == k }}>{{ n }}</option>{% endfor %}</select></div>
+  {% endif %}
+  <div class="acciones"><button class="btn">Consultar</button></div>
+  <div class="acciones empuja">
+    <a class="btn sec" href="{{ url_for('reportes.exportar', clave=r.clave, formato='csv', **request.args) }}">Exportar CSV</a>
+    <a class="btn sec" href="{{ url_for('reportes.exportar', clave=r.clave, formato='pdf', **request.args) }}">Exportar PDF</a>
+  </div>
+</form>
+
+<section class="panel">
+  <h2>{{ r.subtitulo }}</h2>
+  {% if r.filas %}
+  <div class="tabla-scroll"><table>
+    <thead><tr>{% for h in r.headers %}<th class="{{ 'num' if r.tipos[loop.index0] != 't' }}">{{ h }}</th>{% endfor %}<th class="col-barra"></th></tr></thead>
+    <tbody>
+    {% for f in r.filas %}
+      {% set fila = loop.index0 %}
+      <tr>{% for v in f %}<td class="{{ 'num' if r.tipos[loop.index0] != 't' }}">{{ v|celda(r.tipos[loop.index0]) }}</td>{% endfor %}
+      <td class="col-barra"><span class="bar" style="width: {{ r.pct[fila] }}%"></span></td></tr>
+    {% endfor %}
+    </tbody>
+    {% if r.totales %}<tfoot><tr>{% for v in r.totales %}<td class="{{ 'num' if r.tipos[loop.index0] != 't' }}">{{ v|celda(r.tipos[loop.index0]) }}</td>{% endfor %}<td></td></tr></tfoot>{% endif %}
+  </table></div>
+  {% else %}<p class="vacio">No hay ventas entre esas fechas. Amplíe el rango para ver resultados.</p>{% endif %}
+</section>
+{% endblock %}

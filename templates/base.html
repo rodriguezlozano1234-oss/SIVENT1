@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf" content="{{ csrf_token() }}">
+  <title>{% block title %}SIVENT{% endblock %} | SIVENT</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="panel-{{ panel or 'acceso' }}">
+{% macro nav(href, texto, activo) -%}
+  <a href="{{ href }}" class="{{ 'on' if activo }}">{{ texto }}</a>
+{%- endmacro %}
+{% if user and panel == 'admin' %}
+{% set ep = request.endpoint or '' %}
+<div class="shell">
+  <aside class="side">
+    <div class="brand">SIVENT<small>Inventario y ventas</small></div>
+    <nav>
+      {{ nav(url_for('inicio'), 'Inicio', ep == 'inicio') }}
+
+      {% if puede('ventas') or puede('reportes') %}<p class="grupo">Ventas</p>{% endif %}
+      {% if puede('ventas') %}{{ nav(url_for('ventas.nueva'), 'Nueva venta', ep == 'ventas.nueva') }}{% endif %}
+      {% if puede('ventas', 'reportes') %}{{ nav(url_for('ventas.historial'), 'Historial de ventas', ep in ['ventas.historial', 'ventas.detalle']) }}{% endif %}
+      {% if puede('clientes') %}{{ nav(url_for('clientes.lista'), 'Clientes', ep == 'clientes.lista') }}{% endif %}
+
+      {% if puede('compras') %}<p class="grupo">Compras</p>
+      {{ nav(url_for('compras.nueva'), 'Nueva compra', ep == 'compras.nueva') }}
+      {{ nav(url_for('compras.lista'), 'Historial de compras', ep in ['compras.lista', 'compras.detalle']) }}{% endif %}
+
+      {% if puede('catalogo', 'ventas', 'inventario') %}<p class="grupo">Almacén</p>
+      {{ nav(url_for('catalogo.vitrina'), 'Catálogo', ep == 'catalogo.vitrina') }}{% endif %}
+      {% if puede('catalogo') %}{{ nav(url_for('catalogo.productos'), 'Productos', ep == 'catalogo.productos') }}
+      {{ nav(url_for('catalogo.categorias'), 'Categorías', ep == 'catalogo.categorias') }}{% endif %}
+      {% if puede('inventario') %}{{ nav(url_for('inventario.lista'), 'Inventario', ep == 'inventario.lista') }}
+      {{ nav(url_for('inventario.movimientos'), 'Movimientos', ep == 'inventario.movimientos') }}{% endif %}
+
+      {% if puede('reportes') %}<p class="grupo">Reportes</p>
+      {% set clave = (request.view_args or {}).get('clave') %}
+      {{ nav(url_for('reportes.ver', clave='ventas'), 'Ventas', clave == 'ventas') }}
+      {{ nav(url_for('reportes.ver', clave='empleados'), 'Ventas por empleado', clave == 'empleados') }}
+      {{ nav(url_for('reportes.ver', clave='productos'), 'Productos más vendidos', clave == 'productos') }}{% endif %}
+
+      {% if puede('usuarios') %}<p class="grupo">Administración</p>
+      {{ nav(url_for('admin.usuarios'), 'Usuarios', ep == 'admin.usuarios') }}
+      {{ nav(url_for('admin.roles'), 'Roles', ep == 'admin.roles') }}{% endif %}
+    </nav>
+    <div class="who">
+      <span>{{ user.nombre }}<br><small>Rol: {{ user.rol }}</small></span>
+      <a href="{{ url_for('cuenta') }}">Cambiar contraseña</a>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="link">Cerrar sesión</button>
+      </form>
+    </div>
+  </aside>
+  <main class="main">
+    {% include '_flash.html' %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% elif user %}
+{% set ep = request.endpoint or '' %}
+<header class="topbar">
+  <a class="marca-top" href="{{ url_for('inicio') }}">SIVENT<small>Vendedor</small></a>
+  <nav class="top-nav" aria-label="Principal">
+    {{ nav(url_for('inicio'), 'Inicio', ep == 'inicio') }}
+    {% if puede('ventas') %}{{ nav(url_for('ventas.nueva'), 'Nueva venta', ep == 'ventas.nueva') }}{% endif %}
+    {% if puede('ventas', 'reportes') %}{{ nav(url_for('ventas.historial'), 'Mis ventas' if not puede('reportes') else 'Historial de ventas', ep in ['ventas.historial', 'ventas.detalle']) }}{% endif %}
+    {% if puede('catalogo', 'ventas', 'inventario') %}{{ nav(url_for('catalogo.vitrina'), 'Catálogo', ep == 'catalogo.vitrina') }}{% endif %}
+    {% if puede('clientes') %}{{ nav(url_for('clientes.lista'), 'Clientes', ep == 'clientes.lista') }}{% endif %}
+    {% if puede('catalogo') %}{{ nav(url_for('catalogo.productos'), 'Productos', ep == 'catalogo.productos') }}{{ nav(url_for('catalogo.categorias'), 'Categorías', ep == 'catalogo.categorias') }}{% endif %}
+    {% if puede('inventario') %}{{ nav(url_for('inventario.lista'), 'Inventario', ep == 'inventario.lista') }}{{ nav(url_for('inventario.movimientos'), 'Movimientos', ep == 'inventario.movimientos') }}{% endif %}
+    {% if puede('compras') %}{{ nav(url_for('compras.nueva'), 'Nueva compra', ep == 'compras.nueva') }}{{ nav(url_for('compras.lista'), 'Compras', ep in ['compras.lista', 'compras.detalle']) }}{% endif %}
+    {% if puede('reportes') %}{% set clave = (request.view_args or {}).get('clave') %}
+    {{ nav(url_for('reportes.ver', clave='ventas'), 'Reportes', clave in ['ventas', 'empleados', 'productos']) }}{% endif %}
+  </nav>
+  <div class="top-user">
+    <span>{{ user.nombre }}</span>
+    <a href="{{ url_for('cuenta') }}">Contraseña</a>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="link">Salir</button></form>
+  </div>
+</header>
+<main class="main main-top">
+  {% include '_flash.html' %}
+  {{ self.content() }}
+</main>
+{% else %}
+  {% block bare %}{% endblock %}
+{% endif %}
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

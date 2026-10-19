@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+{% block content %}
+<h1>Hola, {{ user.nombre.split(' ')[0] }}</h1>
+
+{% if puede('ventas') %}
+<a class="cta" href="{{ url_for('ventas.nueva') }}">
+  <span class="cta-titulo">Nueva venta</span>
+  <span class="cta-sub">Boleta o factura, con descuento automático de stock</span>
+</a>
+{% if puede('catalogo', 'ventas', 'inventario') %}<p class="nota"><a href="{{ url_for('catalogo.vitrina') }}">Ver catálogo con fotos</a> para mostrar productos al cliente.</p>{% endif %}
+
+<div class="resumen v">
+  <div class="dato"><span class="cifra">{{ d.hoy.t|soles }}</span><span class="rotulo">sus ventas de hoy ({{ d.hoy.n }})</span></div>
+  <div class="dato"><span class="cifra">{{ d.mes.t|soles }}</span><span class="rotulo">sus ventas del mes ({{ d.mes.n }})</span></div>
+</div>
+
+<div class="dos">
+  <section class="panel">
+    <h2>Consulta rápida de stock</h2>
+    <input type="search" id="consulta" placeholder="Código o nombre del producto" aria-label="Consultar producto" autocomplete="off">
+    <div id="consulta-res" class="consulta-res"><p class="vacio">Escriba para ver precio y disponibilidad.</p></div>
+    <script id="productos-data" type="application/json">{{ d.productos|tojson }}</script>
+  </section>
+
+  <section class="panel">
+    <h2>Mis últimas ventas</h2>
+    {% if d.ultimas %}
+    <table>
+      <thead><tr><th>Comprobante</th><th>Cliente</th><th class="num">Total</th></tr></thead>
+      <tbody>{% for v in d.ultimas %}
+        <tr class="{{ 'anulada' if v.estado == 'ANULADA' }}"><td><a href="{{ url_for('ventas.detalle', vid=v.id) }}">{{ serie(v) }}</a>{% if v.estado == 'ANULADA' %} <span class="tag bajo">anulada</span>{% endif %}<br><small class="muted">{{ v.fecha|fh }}</small></td>
+        <td>{{ v.cliente or 'Público general' }}</td><td class="num">{{ v.total|soles }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="vacio">Todavía no registró ventas. Empiece con «Nueva venta».</p>{% endif %}
+  </section>
+</div>
+{% else %}
+<p class="vacio">Use el menú superior para trabajar en los módulos de su rol.</p>
+{% endif %}
+
+{% if d.bajos is defined and d.bajos %}
+<section class="panel">
+  <h2>Productos con stock bajo ({{ d.bajos|length }})</h2>
+  <table>
+    <thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th></tr></thead>
+    <tbody>{% for p in d.bajos %}<tr><td>{{ p.nombre }} <small class="muted">{{ p.codigo }}</small></td><td class="num">{{ p.cantidad }}</td><td class="num">{{ p.stock_min }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if puede('ventas') %}<script src="{{ url_for('static', filename='js/consulta.js') }}"></script>{% endif %}{% endblock %}

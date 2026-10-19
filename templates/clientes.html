@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+<h1>Clientes</h1>
+<form method="post" action="{{ url_for('clientes.guardar') }}" class="panel" data-crud="cliente">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="id">
+  <h2 class="crud-titulo">Nuevo cliente</h2>
+  <div class="fila-campos">
+    <div class="campo"><label for="k-tipo">Documento</label>
+      <select id="k-tipo" name="tipo_documento"><option>DNI</option><option>RUC</option><option value="CE">Carné de extranjería</option><option value="OTRO">Otro</option></select></div>
+    <div class="campo"><label for="k-num">Número</label><input id="k-num" name="numero_documento" required maxlength="20"></div>
+    <div class="campo ancho"><label for="k-nombre">Nombre o razón social</label><input id="k-nombre" name="nombre" required></div>
+  </div>
+  <div class="fila-campos">
+    <div class="campo"><label for="k-tel">Teléfono</label><input id="k-tel" name="telefono" maxlength="30"></div>
+    <div class="campo"><label for="k-mail">Correo</label><input id="k-mail" name="email" type="email"></div>
+    <div class="campo ancho"><label for="k-dir">Dirección</label><input id="k-dir" name="direccion"></div>
+  </div>
+  <div class="acciones">
+    <button class="btn crud-enviar">Registrar cliente</button>
+    <button type="button" class="btn sec crud-cancelar" hidden>Cancelar edición</button>
+  </div>
+</form>
+<section class="panel">
+  <div class="cabecera-tabla">
+    <h2>Clientes ({{ clientes|length }})</h2>
+    <input type="search" data-filtro="#tabla-clientes" placeholder="Buscar por nombre o documento" aria-label="Buscar cliente">
+  </div>
+  {% if clientes %}
+  <div class="tabla-scroll">
+  <table id="tabla-clientes">
+    <thead><tr><th>Documento</th><th>Nombre</th><th>Contacto</th><th>Dirección</th><th></th></tr></thead>
+    <tbody>
+    {% for c in clientes %}
+      <tr data-json='{{ {"id": c.id, "tipo_documento": c.tipo_documento, "numero_documento": c.numero_documento, "nombre": c.nombre, "telefono": c.telefono, "email": c.email, "direccion": c.direccion}|tojson }}'>
+        <td>{{ c.tipo_documento }} {{ c.numero_documento }}</td><td>{{ c.nombre }}</td>
+        <td>{{ c.telefono }}{% if c.telefono and c.email %}<br>{% endif %}{{ c.email }}</td><td>{{ c.direccion }}</td>
+        <td class="acc">
+          <button type="button" class="btn sec chico js-editar">Editar</button>
+          <form method="post" action="{{ url_for('clientes.eliminar', cid=c.id) }}" class="en-linea js-confirm" data-confirm="¿Eliminar a &quot;{{ c.nombre }}&quot;? Sus ventas anteriores se conservan.">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="btn peligro chico">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="vacio">Aún no hay clientes registrados.</p>{% endif %}
+</section>
+{% endblock %}

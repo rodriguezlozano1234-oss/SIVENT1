@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ serie }}{% endblock %}
+{% block content %}
+<h1>{{ v.tipo_comprobante|capitalize }} {{ serie }}{% if v.estado == 'ANULADA' %} <span class="tag bajo">anulada</span>{% endif %}</h1>
+{% if v.estado == 'ANULADA' %}
+<p class="aviso error">Venta anulada el {{ v.anulada_fecha|fh }}. Motivo: {{ v.anulada_motivo }}. El stock volvió al inventario y la venta no suma en los reportes.</p>
+{% endif %}
+<section class="panel">
+  <p><strong>Fecha:</strong> {{ v.fecha|fh }}<br>
+  <strong>Cliente:</strong> {% if v.cliente_nombre %}{{ v.cliente_nombre }} ({{ v.tipo_documento }} {{ v.numero_documento }}){% else %}Público general{% endif %}<br>
+  <strong>Atendió:</strong> {{ v.usuario_nombre }}</p>
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>Código</th><th>Producto</th><th class="num">Cantidad</th><th class="num">P. unit.</th><th class="num">Subtotal</th></tr></thead>
+    <tbody>{% for i in items %}<tr><td>{{ i.codigo }}</td><td>{{ i.nombre }}</td><td class="num">{{ i.cantidad }}</td><td class="num">{{ i.precio_unit|soles }}</td><td class="num">{{ i.subtotal|soles }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td colspan="4" class="num"><strong>Total</strong></td><td class="num"><strong>{{ v.total|soles }}</strong></td></tr></tfoot>
+  </table></div>
+  <p class="acciones"><a class="btn" href="{{ url_for('ventas.comprobante', vid=v.id) }}" target="_blank" rel="noopener">Descargar comprobante (PDF)</a>
+  <a class="btn sec" href="{{ url_for('ventas.historial') }}">Volver al historial</a></p>
+</section>
+{% if puede_anular %}
+<section class="panel">
+  <h2>Anular venta</h2>
+  <p class="nota">Use esto si la venta se registró por error o el cliente la devolvió completa. Se repone el stock de todos los productos y la venta deja de contar en reportes. No se puede deshacer.</p>
+  <form method="post" action="{{ url_for('ventas.anular', vid=v.id) }}" class="js-confirm" data-confirm="¿Anular la venta {{ serie }}? Esta acción no se puede deshacer.">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="fila-campos">
+      <div class="campo ancho"><label for="motivo">Motivo de la anulación</label><input id="motivo" name="motivo" required minlength="5" maxlength="200" placeholder="Ej.: producto equivocado, devolución del cliente"></div>
+      <div class="campo" style="flex:0 0 auto"><button class="btn peligro">Anular venta</button></div>
+    </div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

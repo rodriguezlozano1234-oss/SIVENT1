@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Nueva venta{% endblock %}
+{% block content %}
+<h1>Nueva venta</h1>
+<div id="resultado" class="aviso ok" hidden></div>
+<div id="error" class="aviso error" hidden></div>
+
+<div class="ventas-grid">
+  <section class="panel">
+    <div class="cabecera-tabla">
+      <h2>Productos</h2>
+      <div class="filtros">
+        <input type="search" id="buscar" placeholder="Buscar por código o nombre" aria-label="Buscar producto" autofocus>
+        <select id="categoria" aria-label="Filtrar por categoría">
+          <option value="">Todas</option>
+          {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="tabla-scroll alta"><table>
+      <thead><tr><th>Producto</th><th class="num">Precio</th><th class="num">Stock</th><th></th></tr></thead>
+      <tbody id="lista-productos"></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel">
+    <h2>Carrito</h2>
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Producto</th><th class="num">Cant.</th><th class="num">Subtotal</th><th></th></tr></thead>
+      <tbody id="carrito"></tbody>
+    </table></div>
+    <p class="vacio" id="carrito-vacio">El carrito está vacío. Agregue productos de la lista.</p>
+    <div class="total"><span>Total</span><strong id="total">S/ 0.00</strong></div>
+
+    <div class="campo">
+      <label for="tipo">Comprobante</label>
+      <select id="tipo"><option>BOLETA</option><option>FACTURA</option></select>
+      <p class="nota" id="aviso-factura" hidden>La factura requiere un cliente con RUC.</p>
+    </div>
+
+    <div class="cliente-box">
+      <label for="cliente-buscar">Cliente</label>
+      <div id="cliente-actual" class="cliente-actual"></div>
+      <input id="cliente-buscar" type="search" placeholder="Buscar por nombre o documento" autocomplete="off">
+      <div id="cliente-resultados" class="resultados" hidden></div>
+      {% if puede('clientes', 'ventas') %}
+      <details class="nuevo-cliente"><summary>Registrar cliente nuevo</summary>
+        <div class="fila-campos">
+          <div class="campo"><label for="nc-tipo">Documento</label><select id="nc-tipo"><option>DNI</option><option>RUC</option><option value="CE">CE</option><option value="OTRO">Otro</option></select></div>
+          <div class="campo"><label for="nc-num">Número</label><input id="nc-num" maxlength="20"></div>
+          <div class="campo ancho"><label for="nc-nombre">Nombre o razón social</label><input id="nc-nombre"></div>
+        </div>
+        <p class="acciones"><button type="button" class="btn sec chico" id="nc-guardar">Guardar y seleccionar</button></p>
+      </details>
+      {% endif %}
+    </div>
+    <button class="btn ok grande" id="confirmar" disabled>Confirmar venta</button>
+  </section>
+</div>
+<script id="productos-data" type="application/json">{{ productos|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/ventas.js') }}"></script>{% endblock %}

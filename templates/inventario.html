@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Inventario{% endblock %}
+{% block content %}
+<div class="titulo-fila">
+  <h1>Inventario</h1>
+  <a class="btn sec empuja" href="{{ url_for('inventario.exportar') }}">Exportar CSV</a>
+</div>
+
+<div class="resumen cuatro">
+  <div class="dato"><span class="cifra">{{ '{:,}'.format(kpi.unidades) }}</span><span class="rotulo">unidades en almacén</span></div>
+  <div class="dato"><span class="cifra">{{ kpi.costo|soles }}</span><span class="rotulo">valor a precio de compra</span></div>
+  <div class="dato"><span class="cifra">{{ kpi.venta|soles }}</span><span class="rotulo">valor a precio de venta</span></div>
+  <div class="dato"><span class="cifra {{ 'alerta' if kpi.agotados or kpi.bajos }}">{{ kpi.agotados + kpi.bajos }}</span><span class="rotulo">{{ kpi.agotados }} sin stock · {{ kpi.bajos }} con stock bajo</span></div>
+</div>
+
+<form method="post" action="{{ url_for('inventario.movimiento') }}" class="panel" id="form-mov">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <h2>Registrar movimiento</h2>
+  <div class="fila-campos">
+    <div class="campo ancho"><label for="m-prod">Producto</label>
+      <select id="m-prod" name="producto_id" required>
+        <option value="">Elija un producto</option>
+        {% for f in filas %}<option value="{{ f.id }}">{{ f.codigo }} · {{ f.nombre }} (stock {{ f.cantidad }})</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label for="m-tipo">Tipo</label>
+      <select id="m-tipo" name="tipo"><option value="ENTRADA">Entrada</option><option value="SALIDA">Salida</option><option value="AJUSTE">Ajuste (stock contado)</option></select></div>
+    <div class="campo"><label for="m-cant" id="m-cant-label">Cantidad</label><input id="m-cant" name="cantidad" type="number" min="0" step="1" required></div>
+  </div>
+  <div class="fila-campos">
+    <div class="campo ancho"><label for="m-motivo">Motivo</label><input id="m-motivo" name="motivo" required maxlength="120" placeholder="Ej.: producto dañado, conteo físico, devolución"></div>
+    <div class="campo" style="flex:0 0 auto"><button class="btn">Registrar movimiento</button></div>
+  </div>
+</form>
+
+<section class="panel">
+  <div class="cabecera-tabla">
+    <h2>Stock actual</h2>
+    <div class="filtros">
+      <input type="search" id="i-buscar" placeholder="Buscar producto" aria-label="Buscar producto">
+      <select id="i-estado" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="agotado">Sin stock</option>
+        <option value="bajo">Stock bajo</option>
+        <option value="normal">Normal</option>
+      </select>
+    </div>
+  </div>
+  {% if filas %}
+  <div class="tabla-scroll">
+  <table id="tabla-inv">
+    <thead><tr><th>Foto</th><th>Código</th><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th><th>Estado</th><th>Ubicación</th><th>Actualizado</th><th></th></tr></thead>
+    <tbody>
+    {% for f in filas %}
+      <tr data-estado="{{ 'agotado' if f.cantidad == 0 else ('bajo' if f.cantidad <= f.stock_min else 'normal') }}">
+        <td class="col-foto">{{ foto(f.imagen, f.nombre) }}</td>
+        <td>{{ f.codigo }}</td><td>{{ f.nombre }}<br><small class="muted">{{ f.categoria }}</small></td>
+        <td class="num">{{ f.cantidad }}</td><td class="num">{{ f.stock_min }}</td>
+        <td>{% if f.cantidad == 0 %}<span class="tag bajo">Sin stock</span>{% elif f.cantidad <= f.stock_min %}<span class="tag bajo">Stock bajo</span>{% else %}<span class="tag okk">Normal</span>{% endif %}</td>
+        <td>
+          <form method="post" action="{{ url_for('inventario.ubicacion', pid=f.id) }}" class="en-linea fila-mini">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <input name="ubicacion" value="{{ f.ubicacion }}" maxlength="60" aria-label="Ubicación de {{ f.nombre }}">
+            <button class="btn sec chico">Guardar</button>
+          </form>
+        </td>
+        <td>{{ f.fecha_actualizacion|fh }}</td>
+        <td class="acc"><button type="button" class="btn sec chico js-mov" data-id="{{ f.id }}">Mover</button></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="vacio">No hay productos activos. Regístrelos en Productos.</p>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/inventario.js') }}"></script>{% endblock %}

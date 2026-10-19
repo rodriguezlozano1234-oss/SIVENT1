@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Categorías{% endblock %}
+{% block content %}
+<h1>Categorías</h1>
+<form method="post" action="{{ url_for('catalogo.categoria_guardar') }}" class="panel" data-crud="categoría">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="id">
+  <h2 class="crud-titulo">Nueva categoría</h2>
+  <div class="fila-campos">
+    <div class="campo"><label for="c-nombre">Nombre</label><input id="c-nombre" name="nombre" required maxlength="60"></div>
+    <div class="campo ancho"><label for="c-desc">Descripción</label><input id="c-desc" name="descripcion"></div>
+  </div>
+  <div class="acciones">
+    <button class="btn crud-enviar">Registrar categoría</button>
+    <button type="button" class="btn sec crud-cancelar" hidden>Cancelar edición</button>
+  </div>
+</form>
+<section class="panel">
+  <h2>Categorías ({{ categorias|length }})</h2>
+  <table>
+    <thead><tr><th>Nombre</th><th>Descripción</th><th class="num">Productos</th><th></th></tr></thead>
+    <tbody>
+    {% for c in categorias %}
+      <tr data-json='{{ {"id": c.id, "nombre": c.nombre, "descripcion": c.descripcion}|tojson }}'>
+        <td>{{ c.nombre }}</td><td>{{ c.descripcion }}</td><td class="num">{% if c.productos %}<a href="{{ url_for('catalogo.vitrina', categoria=c.id) }}" title="Ver en el catálogo">{{ c.productos }}</a>{% else %}0{% endif %}</td>
+        <td class="acc">
+          <button type="button" class="btn sec chico js-editar">Editar</button>
+          <form method="post" action="{{ url_for('catalogo.categoria_eliminar', cid=c.id) }}" class="en-linea js-confirm" data-confirm="¿Eliminar la categoría &quot;{{ c.nombre }}&quot;?">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="btn peligro chico">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

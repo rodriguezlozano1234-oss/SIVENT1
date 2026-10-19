@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Productos{% endblock %}
+{% block content %}
+<div class="titulo-fila">
+  <h1>Productos</h1>
+  <a class="btn sec empuja" href="{{ url_for('catalogo.vitrina') }}">Ver catálogo con fotos</a>
+</div>
+
+<form method="post" action="{{ url_for('catalogo.producto_guardar') }}" class="panel" data-crud="producto" enctype="multipart/form-data">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="id">
+  <h2 class="crud-titulo">Nuevo producto</h2>
+  <div class="form-foto">
+    <div class="foto-campo">
+      <div class="foto-prev" id="foto-prev" aria-live="polite"><span class="foto ph" style="--h:215" aria-hidden="true">+</span></div>
+      <label for="f-imagen" class="btn sec chico foto-boton">Elegir foto</label>
+      <input id="f-imagen" name="imagen" type="file" accept="image/jpeg,image/png,image/webp" class="sr">
+      <label class="check foto-quitar" id="foto-quitar" hidden><input type="checkbox" name="quitar_imagen" value="1"> Quitar la foto actual</label>
+      <p class="nota" id="foto-nota">JPG, PNG o WEBP · hasta 5 MB</p>
+    </div>
+    <div class="form-foto-campos">
+      <div class="fila-campos">
+        <div class="campo"><label for="f-codigo">Código</label><input id="f-codigo" name="codigo" placeholder="Automático" maxlength="30"></div>
+        <div class="campo ancho"><label for="f-nombre">Nombre</label><input id="f-nombre" name="nombre" required></div>
+        <div class="campo"><label for="f-cat">Categoría</label>
+          <select id="f-cat" name="categoria_id" required>{% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="fila-campos">
+        <div class="campo ancho"><label for="f-desc">Descripción</label><input id="f-desc" name="descripcion" placeholder="Se muestra en el catálogo"></div>
+      </div>
+      <div class="fila-campos">
+        <div class="campo"><label for="f-pc">Precio de compra (S/)</label><input id="f-pc" name="precio_compra" type="number" step="0.01" min="0" value="0"></div>
+        <div class="campo"><label for="f-pv">Precio de venta (S/)</label><input id="f-pv" name="precio_venta" type="number" step="0.01" min="0" required></div>
+        <div class="campo"><label for="f-min">Stock mínimo</label><input id="f-min" name="stock_min" type="number" step="1" min="0" value="0"></div>
+        <div class="campo solo-nuevo"><label for="f-stock">Stock inicial</label><input id="f-stock" name="stock" type="number" step="1" min="0" value="0"></div>
+        <div class="campo ancho solo-nuevo"><label for="f-ubic">Ubicación en almacén</label><input id="f-ubic" name="ubicacion" maxlength="60"></div>
+      </div>
+      <p class="nota" id="aviso-margen" hidden>El precio de venta es menor que el de compra: el producto se vendería con pérdida.</p>
+    </div>
+  </div>
+  <p class="nota solo-edicion">El stock se modifica desde Inventario (entradas, salidas y ajustes) para que quede registrado.</p>
+  <div class="acciones">
+    <button class="btn crud-enviar">Registrar producto</button>
+    <button type="button" class="btn sec crud-cancelar" hidden>Cancelar edición</button>
+  </div>
+</form>
+
+<section class="panel">
+  <div class="cabecera-tabla">
+    <h2>Productos (<span id="cuenta-prod">{{ productos|length }}</span>)</h2>
+    <div class="filtros">
+      <input type="search" id="p-buscar" placeholder="Buscar por código, nombre o categoría" aria-label="Buscar producto">
+      <select id="p-cat" aria-label="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      <select id="p-estado" aria-label="Filtrar por estado">
+        <option value="">Todo el stock</option>
+        <option value="agotado">Sin stock</option>
+        <option value="bajo">Stock bajo</option>
+        <option value="sinfoto">Sin foto</option>
+      </select>
+      <a class="btn sec chico" href="{{ url_for('catalogo.productos_csv') }}">Exportar CSV</a>
+    </div>
+  </div>
+  {% if productos %}
+  <div class="tabla-scroll">
+  <table id="tabla-productos">
+    <thead><tr><th>Foto</th><th>Código</th><th>Producto</th><th>Categoría</th><th class="num">P. compra</th><th class="num">P. venta</th><th class="num">Margen</th><th class="num">Stock</th><th></th></tr></thead>
+    <tbody>
+    {% for p in productos %}
+      {% set margen = ((p.precio_venta - p.precio_compra) / p.precio_venta * 100) if p.precio_venta and p.precio_compra else None %}
+      <tr data-id="{{ p.id }}" data-cat="{{ p.categoria_id }}" data-estado="{{ 'agotado' if p.stock == 0 else ('bajo' if p.stock <= p.stock_min else 'normal') }}" data-foto="{{ '1' if p.imagen else '0' }}"
+          data-json='{{ {"id": p.id, "codigo": p.codigo, "nombre": p.nombre, "descripcion": p.descripcion, "precio_compra": p.precio_compra, "precio_venta": p.precio_venta, "categoria_id": p.categoria_id, "stock_min": p.stock_min, "img": foto_url(p.imagen)}|tojson }}'>
+        <td class="col-foto">{{ foto(p.imagen, p.nombre) }}</td>
+        <td>{{ p.codigo }}</td>
+        <td>{{ p.nombre }}{% if p.descripcion %}<br><small class="muted">{{ p.descripcion }}</small>{% endif %}</td>
+        <td>{{ p.categoria }}</td>
+        <td class="num">{{ p.precio_compra|soles }}</td>
+        <td class="num">{{ p.precio_venta|soles }}</td>
+        <td class="num">{% if margen is not none %}<span class="{{ 'neg' if margen < 0 }}">{{ '%.0f'|format(margen) }}%</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="num">{{ p.stock }} {% if p.stock <= p.stock_min %}<span class="tag bajo">bajo</span>{% endif %}</td>
+        <td class="acc">
+          <button type="button" class="btn sec chico js-editar">Editar</button>
+          <form method="post" action="{{ url_for('catalogo.producto_eliminar', pid=p.id) }}" class="en-linea js-confirm" data-confirm="¿Eliminar &quot;{{ p.nombre }}&quot;? Dejará de aparecer en el catálogo y en Ventas; su historial se conserva.">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <button class="btn peligro chico">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="vacio" id="p-vacio" hidden>Ningún producto coincide con los filtros.</p>
+  {% else %}<p class="vacio">Todavía no hay productos. Registre el primero con el formulario de arriba.</p>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/productos.js') }}"></script>{% endblock %}

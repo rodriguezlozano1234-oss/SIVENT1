@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<h1>Usuarios</h1>
+<form method="post" action="{{ url_for('admin.usuario_guardar') }}" class="panel" data-crud="usuario" autocomplete="off">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="id">
+  <h2 class="crud-titulo">Nuevo usuario</h2>
+  <div class="fila-campos">
+    <div class="campo ancho"><label for="u-nombre">Nombre completo</label><input id="u-nombre" name="nombre_completo" required></div>
+    <div class="campo"><label for="u-user">Usuario</label><input id="u-user" name="usuario" required maxlength="30"></div>
+    <div class="campo"><label for="u-rol">Rol</label>
+      <select id="u-rol" name="rol_id" required>{% for r in roles %}<option value="{{ r.id }}">{{ r.nombre }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="fila-campos">
+    <div class="campo"><label for="u-pass">Contraseña <span class="solo-edicion">(déjela vacía para no cambiarla)</span></label>
+      <input id="u-pass" name="password" type="password" minlength="8" autocomplete="new-password"></div>
+    <div class="campo"><label class="check"><input type="checkbox" name="activo" value="1" checked> Usuario activo</label></div>
+  </div>
+  <div class="acciones">
+    <button class="btn crud-enviar">Crear usuario</button>
+    <button type="button" class="btn sec crud-cancelar" hidden>Cancelar edición</button>
+  </div>
+</form>
+<section class="panel">
+  <h2>Usuarios ({{ usuarios|length }})</h2>
+  <table>
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+    <tbody>{% for u in usuarios %}
+      <tr data-json='{{ {"id": u.id, "nombre_completo": u.nombre_completo, "usuario": u.usuario, "rol_id": u.rol_id, "activo": u.activo}|tojson }}'>
+        <td>{{ u.nombre_completo }}</td><td>{{ u.usuario }}</td><td>{{ u.rol }}</td>
+        <td>{% if u.activo %}<span class="tag okk">Activo</span>{% else %}<span class="tag neutro">Inactivo</span>{% endif %}</td>
+        <td class="acc"><button type="button" class="btn sec chico js-editar">Editar</button></td>
+      </tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

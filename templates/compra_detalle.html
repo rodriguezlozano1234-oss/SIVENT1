@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Compra #{{ c.id }}{% endblock %}
+{% block content %}
+<h1>Compra #{{ c.id }}</h1>
+<section class="panel">
+  <p><strong>Proveedor:</strong> {{ c.proveedor }}<br><strong>Fecha:</strong> {{ c.fecha|fh }}<br><strong>Registró:</strong> {{ c.usuario }}</p>
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>Código</th><th>Producto</th><th class="num">Cantidad</th><th class="num">Costo unit.</th><th class="num">Subtotal</th></tr></thead>
+    <tbody>{% for i in items %}<tr><td>{{ i.codigo }}</td><td>{{ i.nombre }}</td><td class="num">{{ i.cantidad }}</td><td class="num">{{ i.precio_unit|soles }}</td><td class="num">{{ i.subtotal|soles }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td colspan="4" class="num"><strong>Total</strong></td><td class="num"><strong>{{ c.total|soles }}</strong></td></tr></tfoot>
+  </table></div>
+  <p><a class="btn sec" href="{{ url_for('compras.lista') }}">Volver al historial</a></p>
+</section>
+{% endblock %}

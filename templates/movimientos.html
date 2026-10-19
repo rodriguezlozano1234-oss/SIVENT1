@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Movimientos de inventario{% endblock %}
+{% block content %}
+<h1>Movimientos de inventario</h1>
+<form method="get" class="panel barra">
+  <div class="campo"><label for="producto_id">Producto</label>
+    <select id="producto_id" name="producto_id"><option value="">Todos</option>
+      {% for p in productos %}<option value="{{ p.id }}" {{ 'selected' if pid == p.id|string }}>{{ p.codigo }} · {{ p.nombre }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo"><option value="">Todos</option>
+      {% for t, n in [('ENTRADA','Entradas'),('SALIDA','Salidas'),('AJUSTE','Ajustes')] %}<option value="{{ t }}" {{ 'selected' if tipo == t }}>{{ n }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="acciones"><button class="btn">Consultar</button></div>
+</form>
+<section class="panel">
+  <h2>{{ filas|length }} {{ 'movimiento' if filas|length == 1 else 'movimientos' }}</h2>
+  {% if filas %}
+  <div class="tabla-scroll">
+  <table>
+    <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th><th class="num">Stock</th><th>Motivo</th><th>Usuario</th></tr></thead>
+    <tbody>
+    {% for m in filas %}
+      <tr>
+        <td>{{ m.fecha|fh }}</td><td>{{ m.producto }}<br><small class="muted">{{ m.codigo }}</small></td>
+        <td><span class="tag {{ {'ENTRADA':'okk','SALIDA':'bajo','AJUSTE':'neutro'}[m.tipo] }}">{{ m.tipo|capitalize }}</span></td>
+        <td class="num">{% if m.tipo == 'ENTRADA' or (m.tipo == 'AJUSTE' and m.stock_resultante > m.stock_anterior) %}+{% else %}−{% endif %}{{ m.cantidad }}</td>
+        <td class="num">{{ m.stock_anterior }} → {{ m.stock_resultante }}</td>
+        <td>{{ m.motivo }}</td><td>{{ m.usuario }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="vacio">No hay movimientos con esos filtros.</p>{% endif %}
+  {% if filas|length == 500 %}<p class="nota">Se muestran los 500 más recientes. Acote las fechas para ver otros.</p>{% endif %}
+</section>
+{% endblock %}
